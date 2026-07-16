@@ -12,7 +12,7 @@ export class EnhancedContentExtractor {
   private fallbackThreshold: number;
 
   constructor() {
-    this.defaultTimeout = parseInt(process.env.DEFAULT_TIMEOUT || '6000', 10);
+    this.defaultTimeout = parseInt(process.env.DEFAULT_TIMEOUT || '15000', 10);
     
     // Read MAX_CONTENT_LENGTH from environment variable, fallback to 500KB
     const envMaxLength = process.env.MAX_CONTENT_LENGTH;
@@ -402,7 +402,7 @@ export class EnhancedContentExtractor {
     
     // Filter out PDF files first
     const nonPdfResults = results.filter(result => !isPdfUrl(result.url));
-    const resultsToProcess = nonPdfResults.slice(0, Math.min(targetCount * 2, 10)); // Process extra to account for failures
+    const resultsToProcess = nonPdfResults.slice(0, Math.min(targetCount + 2, 8)); // Process a few extra to account for failures
     
     console.log(`[EnhancedContentExtractor] Processing ${resultsToProcess.length} non-PDF results concurrently`);
     
@@ -412,11 +412,11 @@ export class EnhancedContentExtractor {
         // Use a race condition with timeout to prevent hanging
         const extractionPromise = this.extractContent({ 
           url: result.url, 
-          timeout: 6000 // Reduced timeout to 6 seconds per page
+          timeout: 15000 // 15 seconds per page to handle browser cold starts
         });
         
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Content extraction timeout')), 8000);
+          setTimeout(() => reject(new Error('Content extraction timeout')), 20000);
         });
         
         const content = await Promise.race([extractionPromise, timeoutPromise]);
